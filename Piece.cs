@@ -47,9 +47,37 @@ public class Piece : MonoBehaviour
         this.chessBoard = cb;
     }
 
+    public void setPosition(Position p)
+    {
+        this.position = p;
+    }
+
     public bool neverMadeMove()
     {
         return this.hasNeverMoved;
+    }
+
+    // pas encore vérifiée
+    public bool moveTo(Move move, ChessBoard chessBoard)
+    {
+        Position target = move.getPosition();
+
+        // si les conditions :
+        // - la pièce se déplace au moins d'une case
+        // - le mouvement reste dans la surface du plateau
+        // - il n'y a pas de pieces sur le passage
+        // - le coup est légal
+        // sont réunies, on déplace la pièce
+        if (!target.equals(move.getPosition())
+            && chessBoard.isNotOut(target)
+            && isWayClear(move, chessBoard)
+            && this.isLegalMove(move, chessBoard)) // vérifier iswayclear
+        {
+            chessBoard.movePiece(target, this);
+            chessBoard.addMoveToHistory(move);
+            return true;
+        }
+        return false;
     }
 
     public bool isLegalMove(Move move)
@@ -64,6 +92,53 @@ public class Piece : MonoBehaviour
             case "Pawn": return this.isPawnLegalMove(move);
             default: return false;
         }
+    }
+
+    // pas encore vérifié
+    private bool isWayClear(Move move, ChessBoard chessBoard)
+    {
+        string direction;
+
+        Position target = move.getPosition();
+        int targetX = target.getX();
+        int targetY = target.getY();
+
+        int posX = this.getX();
+        int posY = this.getY();
+
+        Position nextPieceFoundPosition;
+
+        // on cherche la direction du mouvement pour vérifier qu'il n'y a pas de pièce adverse sur la route
+        if (targetY == posY && targetX < posX) { direction = "Left"; }
+
+        else if (targetY == posY && targetX > posX) { direction = "Right"; }
+
+        else if (targetY < posY && targetX == posX) { direction = "Top"; }
+
+        else if (targetY > posY && targetX == posX) { direction = "Bottom"; }
+
+        else if (target.distanceY(posY) == target.distanceX(posX))
+        {
+            if (targetY < posY && targetX > posX) { direction = "TopRightCorner"; }
+
+            else if (targetY < posY && targetX < posX) { direction = "TopLeftCorner"; }
+
+            else if (targetY > posY && targetX < posX) { direction = "BottomLeftCorner"; }
+
+            else if (targetY > posY && targetX > posX) { direction = "BottomRightCorner"; }
+        }
+        else { return false; } // n'arrive normalement jamais sauf s'il y a une erreur
+
+        // on déclare une position (qui va changer) pour la prochaine pièce trouvée dans la direction du mouvement
+        nextPieceFoundPosition = this.position.copy();
+        // on cherche la prochaine pièce dans la direction (la fonction modifie la position passée en paramètre)
+        chessBoard.findNextPiece(direction, nextPieceFoundPosition);
+        if (compareDistance(move, target, direction))
+        {
+            //////////////////////////
+            // il faut comparer la distance entre la position et la target et entre la position et la case retournée par le scan
+        }
+        return false;
     }
 
     // King
