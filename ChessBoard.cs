@@ -37,6 +37,7 @@ public class ChessBoard
         piece.setChessBoard(this);
     }
 
+    // précondition : le coup doit etre valide
     public void movePiece(Position p, Piece piece)
     {
         Piece pieceInP = this.getPiece(p);
@@ -98,7 +99,7 @@ public class ChessBoard
         return this.movesHistory[this.movesHistory.Count - 1];
     }
 
-    public void findNextPiece(string direction, Position position)
+    public void findNextPiece(Move move, string direction, Position position)
     {
         int posX;
         int posY;
@@ -126,7 +127,8 @@ public class ChessBoard
         }
 
         // puis on déplace la position dans la direction donnée jusqu'à trouver une case non vide
-        while (isNotOut(position))
+        // ou atteindre la position target du mouvement étudié
+        while (isNotOut(position) && !position.equals(move.getPosition()))
         {
             posX = position.getX();
             posY = position.getY();

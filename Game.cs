@@ -43,6 +43,7 @@ public class Game : MonoBehaviour
             }
         }
         chessBoard.print();
+        // faire un test de mouvement ///////////////////////////////
     }
 
     private string getPieceName(int columnIndex)

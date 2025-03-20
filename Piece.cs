@@ -70,8 +70,8 @@ public class Piece : MonoBehaviour
         // sont réunies, on déplace la pièce
         if (!target.equals(move.getPosition())
             && chessBoard.isNotOut(target)
-            && isWayClear(move, chessBoard)
-            && this.isLegalMove(move, chessBoard)) // vérifier iswayclear
+            && this.isWayClear(move, chessBoard)
+            && this.isLegalMove(move)) // vérifier iswayclear
         {
             chessBoard.movePiece(target, this);
             chessBoard.addMoveToHistory(move);
@@ -97,7 +97,7 @@ public class Piece : MonoBehaviour
     // pas encore vérifié
     private bool isWayClear(Move move, ChessBoard chessBoard)
     {
-        string direction;
+        string direction = "";
 
         Position target = move.getPosition();
         int targetX = target.getX();
@@ -117,7 +117,7 @@ public class Piece : MonoBehaviour
 
         else if (targetY > posY && targetX == posX) { direction = "Bottom"; }
 
-        else if (target.distanceY(posY) == target.distanceX(posX))
+        else if (target.distanceY(this.getPosition()) == target.distanceX(this.getPosition()))
         {
             if (targetY < posY && targetX > posX) { direction = "TopRightCorner"; }
 
@@ -131,14 +131,53 @@ public class Piece : MonoBehaviour
 
         // on déclare une position (qui va changer) pour la prochaine pièce trouvée dans la direction du mouvement
         nextPieceFoundPosition = this.position.copy();
-        // on cherche la prochaine pièce dans la direction (la fonction modifie la position passée en paramètre)
-        chessBoard.findNextPiece(direction, nextPieceFoundPosition);
-        if (compareDistance(move, target, direction))
+        // on cherche la prochaine pièce dans la direction (la fonction modifie nextPieceFoundPosition)
+        chessBoard.findNextPiece(move, direction, nextPieceFoundPosition);
+        // if (!nextPieceFoundPosition.equals(target))
+        if (compareDistance(move, nextPieceFoundPosition, direction))
         {
             //////////////////////////
             // il faut comparer la distance entre la position et la target et entre la position et la case retournée par le scan
         }
         return false;
+    }
+
+    /*
+        compare la distance entre piece de this-p1 et this-p2 et retourne le résultat
+        en gros : return |this-p2 - this-p1|
+    */
+    public bool compareDistance(Piece p1, Piece p2, string direction)
+    {
+        int p1X = p1.getX();
+        int p1Y = p1.getY();
+        int p2X = p2.getX();
+        int p2Y = p2.getY();
+        // à faire ///////////////////////////////////////////////////
+        int distance_pos_piece;
+        int distance_pos_target;
+        // comparer |x1 - x2 + y1 - y2| et |x3 - x4 + y3 - y4| quand ligne droite
+        // si diagonale comparer que avec x ou y
+        if (direction == "Right"
+            || direction == "Left"
+            || direction == "Top"
+            || direction == "Bottom")
+        {
+            // si la direction est en ligne droite, on initialise la distance [pièce rencontré]-[position initiale]
+            // à |posX - pieceX + posY - pieceY|
+            // et la distance à parcourir pour effectuer le mouvement voulu par le joueur
+            // à |posX - targetX + posY - targetY|
+            distance_pos_piece = Mathf.Abs(move.getPosition().getX() - target.line + move.posColumn - target.column);
+            distance_pos_target = Mathf.Abs(move.posLine - move.targetLine + move.posColumn - move.targetColumn);
+        }
+        else
+        {
+            // sinon on initialise en ne faisant la différence que de x ou y car si on fait l'addition,
+            // le calcul donnera toujours 0.
+            distance_pos_piece = Mathf.Abs(move.posLine - target.line);
+            distance_pos_target = Mathf.Abs(move.poLine - move.targetLine);
+        }
+        // comparer les résultats et retourner
+        return false; // a changer
     }
 
     // King

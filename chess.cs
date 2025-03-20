@@ -12,11 +12,11 @@ public class chess : MonoBehaviour
     // création d'un mouvement "mouvement précédent", actuellement vide
     public static structure.s_move lastMove = new structure.s_move(new structure.s_piece("Empty", "Empty", new Vector3(0, 0)), new structure.s_position(0, 0), new structure.s_position(0, 0));
 
-    public static List<structure.s_piece> piecesList = new List<structure.s_piece>();
+    public static List<Piece> piecesList = new List<Piece>();
 
     public static List<GameObject> piecesListObjects = new List<GameObject>();
 
-    public static List<(structure.s_piece, GameObject)> pairedList = new List<(structure.s_piece, GameObject)>();
+    public static List<(Piece, GameObject)> pairedList = new List<(Piece, GameObject)>();
     void Start()
     {
         // Remplissage du plateau
@@ -77,8 +77,8 @@ public class chess : MonoBehaviour
         pairedList.Clear(); // Nettoyer la liste des anciens éléments
 
         // Séparer les pièces et objets par couleur
-        var whitePieces = piecesList.Where(piece => piece.color == "White").OrderBy(piece => piece.name).ToList();
-        var blackPieces = piecesList.Where(piece => piece.color == "Black").OrderBy(piece => piece.name).ToList();
+        var whitePieces = piecesList.Where(piece => piece.getColor() == "White").OrderBy(piece => piece.name).ToList();
+        var blackPieces = piecesList.Where(piece => piece.getColor() == "Black").OrderBy(piece => piece.name).ToList();
 
         var whiteObjects = piecesListObjects.Where(go => go.name.Contains("White")).OrderBy(go => go.name).ToList();
         var blackObjects = piecesListObjects.Where(go => go.name.Contains("Black")).OrderBy(go => go.name).ToList();
@@ -111,11 +111,11 @@ public class chess : MonoBehaviour
     {
         foreach (var pair in pairedList)
         {
-            structure.s_piece piece = pair.Item1; // Premier élément : s_piece
+            Piece piece = pair.Item1; // Premier élément : s_piece
             GameObject gameObject = pair.Item2;  // Deuxième élément : GameObject
 
             // Affiche les informations dans la console
-            Debug.Log($"Piece Name: {piece.name}, Color: {piece.color}, GameObject Name: {gameObject.name}");
+            Debug.Log($"Piece Name: {piece.name}, Color: {piece.getColor()}, GameObject Name: {gameObject.name}");
         }
     }
 
