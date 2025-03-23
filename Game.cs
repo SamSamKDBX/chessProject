@@ -9,11 +9,22 @@ public class Game : MonoBehaviour
     {
         Piece piece;
         // Remplissage du plateau
+        /*
+            7| ♖  ♘  ♗  ♕  ♔  ♗  ♘  ♖  Black
+            6| ♙  ♙  ♙  ♙  ♙  ♙  ♙  ♙
+            5| ◼  ◻  ◼  ◻  ◼  ◻  ◼  ◻
+            4| ◻  ◼  ◻  ◼  ◻  ◼  ◻  ◼
+            3| ◼  ◻  ◼  ◻  ◼  ◻  ◼  ◻
+            2| ◻  ◼  ◻  ◼  ◻  ◼  ◻  ◼
+            1| ♟  ♟  ♟  ♟  ♟  ♟  ♟  ♟
+            0| ♜  ♞  ♝  ♛  ♚  ♝  ♞  ♜  White
+              -----------------------
+               0  1  2  3  4  5  6  7 
+        */
         for (int y = 0; y < 8; y++)
         {
             for (int x = 0; x < 8; x++)
             {
-                // Exemple de logique pour remplir le tableau
                 if (y == 1)
                 {
                     piece = new Piece("Pawn", "White", x, y);
@@ -44,6 +55,8 @@ public class Game : MonoBehaviour
         }
         chessBoard.print();
         // faire un test de mouvement ///////////////////////////////
+        Position p = new Position(4, 1); // position du pion blanc devant le roi (e2)
+        Move move_test = new Move(chessBoard.getPiece(p), p);
     }
 
     private string getPieceName(int columnIndex)

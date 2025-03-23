@@ -99,46 +99,55 @@ public class Piece : MonoBehaviour
     {
         string direction = "";
 
+        // on récupère la position target du mouvement et ses coordonnées
         Position target = move.getPosition();
         int targetX = target.getX();
         int targetY = target.getY();
 
+        // les coordonnées de la pièce actuelle (this)
         int posX = this.getX();
         int posY = this.getY();
+
+        int stepX; // direction du pas en x
+        int stepY; // direction du pas en Y
 
         Position nextPieceFoundPosition;
 
         // on cherche la direction du mouvement pour vérifier qu'il n'y a pas de pièce adverse sur la route
-        if (targetY == posY && targetX < posX) { direction = "Left"; }
+        // changer pour mettre directement les step ici /////////////////////////////////////////////////
+        if (targetY == posY && targetX < posX) { direction = "Left"; stepX = -1; stepY = 0 } // Left
 
-        else if (targetY == posY && targetX > posX) { direction = "Right"; }
+        else if (targetY == posY && targetX > posX) { direction = "Right"; stepX = 1; stepY = 0 } // Right
 
-        else if (targetY < posY && targetX == posX) { direction = "Top"; }
+        else if (targetY < posY && targetX == posX) { direction = "Top"; stepX = 0; stepY = 1 } // Top
 
-        else if (targetY > posY && targetX == posX) { direction = "Bottom"; }
+        else if (targetY > posY && targetX == posX) { direction = "Bottom"; stepX = 0; stepY = -1 } // Bottom
 
         else if (target.distanceY(this.getPosition()) == target.distanceX(this.getPosition()))
         {
-            if (targetY < posY && targetX > posX) { direction = "TopRightCorner"; }
+            if (targetY < posY && targetX > posX) { direction = "TopRightCorner"; stepX = 1; stepY = 1 } // TopRightCorner
 
-            else if (targetY < posY && targetX < posX) { direction = "TopLeftCorner"; }
+            else if (targetY < posY && targetX < posX) { direction = "TopLeftCorner"; stepX = -1; stepY = 1 } // TopLeftCorner
 
-            else if (targetY > posY && targetX < posX) { direction = "BottomLeftCorner"; }
+            else if (targetY > posY && targetX < posX) { direction = "BottomLeftCorner"; stepX = 1; stepY = -1 } // BottomLeftCorner
 
-            else if (targetY > posY && targetX > posX) { direction = "BottomRightCorner"; }
+            else if (targetY > posY && targetX > posX) { direction = "BottomRightCorner"; stepX = -1; stepY = -1 } // BottomRightCorner
         }
-        else { return false; } // n'arrive normalement jamais sauf s'il y a une erreur
 
         // on déclare une position (qui va changer) pour la prochaine pièce trouvée dans la direction du mouvement
         nextPieceFoundPosition = this.position.copy();
-        // on cherche la prochaine pièce dans la direction (la fonction modifie nextPieceFoundPosition)
-        chessBoard.findNextPiece(move, direction, nextPieceFoundPosition);
-        // if (!nextPieceFoundPosition.equals(target))
-        if (compareDistance(move, nextPieceFoundPosition, direction))
+
+        // puis on déplace la position dans la direction donnée jusqu'à trouver une case non vide
+        // ou atteindre la position target du mouvement étudié
+        while (isNotOut(nextPieceFoundPosition) 
+            && !nextPieceFoundPosition.equals(target) 
+            && chessBoard.getPiece(nextPieceFoundPosition) == null)
         {
-            //////////////////////////
-            // il faut comparer la distance entre la position et la target et entre la position et la case retournée par le scan
+            nextPieceFoundPosition.incrementXY(stepX, stepY);
         }
+
+        // if (!nextPieceFoundPosition.equals(target))
+        
         return false;
     }
 

@@ -17,6 +17,11 @@ public class Position
         this.y = y;
     }
 
+    public void incrementXY(int xToAdd, int yToAdd) {
+        this.x += xToAdd;
+        this.y += yToAdd;
+    }
+
     public int getX()
     {
         return this.x;
