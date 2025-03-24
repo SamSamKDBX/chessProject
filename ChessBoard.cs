@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
+using System.Linq;
 
 public class ChessBoard
 {
@@ -37,10 +39,21 @@ public class ChessBoard
         piece.setChessBoard(this);
     }
 
+    /*
+        Fonction qui déplace une pièce donnée à une position données 
+        dans le tableau chessBoard
+
+        et modifie le champ position de la pièce
+    */
     // précondition : le coup doit etre valide
     public void movePiece(Position p, Piece piece)
     {
+        // on ajoute la position avant mouvement à la liste des dernieres positions
+        piece.latestPositions.add(piece.position);
+
+        // on récupère la pièce située à la position donnée
         Piece pieceInP = this.getPiece(p);
+
         // si la case est occupée, on capture la pièce
         if (pieceInP != null)
         {
@@ -82,6 +95,22 @@ public class ChessBoard
         return this.chessBoard[p.getX(), p.getY()];
     }
 
+    public Piece getKing(string color)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                Piece p = this.chessBoard[j, i]
+                if (p.getName() == "King" && p.getColor() == color)
+                {
+                    return p;
+                }
+            }
+        }
+        return null;
+    }
+
     public void addMoveToHistory(Move m)
     {
         this.movesHistory.Add(m);
@@ -96,54 +125,54 @@ public class ChessBoard
 
     public Move getLastMoveFromHistory()
     {
-        return this.movesHistory[this.movesHistory.Count - 1];
+        return this.movesHistory.Last();
     }
-
-    public void findNextPiece(Move move, string direction, Position position)
-    {
-        int posX;
-        int posY;
-        // Déterminer la direction de mouvement selon les axes lignes et colonnes
-
-        // Si la direction est "Bottom", "BottomRightCorner" ou "BottomLeftCorner", 
-        // on se déplace vers le bas (ligne négative : -1), sinon vers le haut (+1).
-        int stepY = direction == "Bottom" || direction == "BottomRightCorner" || direction == "BottomLeftCorner" ? -1 : 1;
-
-        // Si la direction est "Right", "BottomRightCorner" ou "TopRightCorner",
-        // on se déplace vers la droite (colonne positive : +1), sinon vers la gauche (-1).
-        int stepX = direction == "Right" || direction == "BottomRightCorner" || direction == "TopRightCorner" ? 1 : -1;
-
-        // Si la direction est strictement horizontale ("Left" ou "Right"),
-        // il n'y a pas de mouvement vertical, donc on met stepY à 0.
-        if (direction == "Left" || direction == "Right")
+    /* 
+        public void findNextPiece(Move move, string direction, Position position)
         {
-            stepY = 0;
-        }
-        // Si la direction est strictement verticale ("Bottom" ou "Top"),
-        // il n'y a pas de mouvement horizontal, donc on met stepX à 0.
-        else if (direction == "Bottom" || direction == "Top")
-        {
-            stepX = 0;
-        }
+            int posX;
+            int posY;
+            // Déterminer la direction de mouvement selon les axes lignes et colonnes
 
-        // puis on déplace la position dans la direction donnée jusqu'à trouver une case non vide
-        // ou atteindre la position target du mouvement étudié
-        while (isNotOut(position) && !position.equals(move.getPosition()))
-        {
-            posX = position.getX();
-            posY = position.getY();
-            if (this.chessBoard[posY, posX] == null)
+            // Si la direction est "Bottom", "BottomRightCorner" ou "BottomLeftCorner", 
+            // on se déplace vers le bas (ligne négative : -1), sinon vers le haut (+1).
+            int stepY = direction == "Bottom" || direction == "BottomRightCorner" || direction == "BottomLeftCorner" ? -1 : 1;
+
+            // Si la direction est "Right", "BottomRightCorner" ou "TopRightCorner",
+            // on se déplace vers la droite (colonne positive : +1), sinon vers la gauche (-1).
+            int stepX = direction == "Right" || direction == "BottomRightCorner" || direction == "TopRightCorner" ? 1 : -1;
+
+            // Si la direction est strictement horizontale ("Left" ou "Right"),
+            // il n'y a pas de mouvement vertical, donc on met stepY à 0.
+            if (direction == "Left" || direction == "Right")
             {
-                position.setPosition(posX + stepX, posY + stepY);
+                stepY = 0;
             }
+            // Si la direction est strictement verticale ("Bottom" ou "Top"),
+            // il n'y a pas de mouvement horizontal, donc on met stepX à 0.
+            else if (direction == "Bottom" || direction == "Top")
+            {
+                stepX = 0;
+            }
+
+            // puis on déplace la position dans la direction donnée jusqu'à trouver une case non vide
+            // ou atteindre la position target du mouvement étudié
+            while (isNotOut(position) && !position.equals(move.getPosition()))
+            {
+                posX = position.getX();
+                posY = position.getY();
+                if (this.chessBoard[posY, posX] == null)
+                {
+                    position.setPosition(posX + stepX, posY + stepY);
+                }
+            }
+
+            // je sais plus pourquoi j'ai mis ca...
+            // on rajoute la direction de là ou on viens à la position de la case sur laquelle on est tombé
+            // position.directionFromColumn = stepX;
+            // position.directionFromLine = stepY;
         }
-
-        // je sais plus pourquoi j'ai mis ca...
-        // on rajoute la direction de là ou on viens à la position de la case sur laquelle on est tombé
-        // position.directionFromColumn = stepX;
-        // position.directionFromLine = stepY;
-    }
-
+     */
     public void print()
     {
         Debug.Log(this.toString());

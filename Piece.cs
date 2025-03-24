@@ -1,10 +1,12 @@
 using UnityEngine;
+using System.Linq;
 
 public class Piece : MonoBehaviour
 {
     private string name;
     private string color;
     private Position position;
+    private List<Position> latestPositions;
     private bool hasNeverMoved;
     private ChessBoard chessBoard;
 
@@ -15,6 +17,7 @@ public class Piece : MonoBehaviour
         this.position = new Position(x, y);
         this.hasNeverMoved = true;
         this.chessBoard = null;
+        this.lastPosition = new List<Position>();
     }
 
     public string getName()
@@ -30,6 +33,11 @@ public class Piece : MonoBehaviour
     public Position getPosition()
     {
         return this.position;
+    }
+
+    public Position getLastPosition()
+    {
+        return this.lastPosition;
     }
 
     public int getX()
@@ -66,14 +74,23 @@ public class Piece : MonoBehaviour
         // - la pièce se déplace au moins d'une case
         // - le mouvement reste dans la surface du plateau
         // - il n'y a pas de pieces sur le passage
-        // - le coup est légal
+        // - le coup est légal pour la pièce à déplacer
         // sont réunies, on déplace la pièce
         if (!target.equals(move.getPosition())
             && chessBoard.isNotOut(target)
-            && this.isWayClear(move, chessBoard)
-            && this.isLegalMove(move)) // vérifier iswayclear
+            && (this.isWayClear(move, chessBoard) || this.name == "Knight")
+            && this.isLegalMove(move))
         {
+            // on bouge dans le tableau chessBoard
             chessBoard.movePiece(target, this);
+            // si le roi est en échec après le mouvement, on reviens à la position initiale
+            if (chessBoard.getKing(this.color).isCheck())
+            {
+                chessBoard.movePiece(this.latestPositions.Last(), this);
+                this.latestPositions.RemoveAt(this.latestPositions.Count - 1);
+                print("You cannot put the king in check");
+                return false;
+            }
             chessBoard.addMoveToHistory(move);
             return true;
         }
@@ -97,6 +114,11 @@ public class Piece : MonoBehaviour
     // pas encore vérifié
     private bool isWayClear(Move move, ChessBoard chessBoard)
     {
+        if (this.name == "Knight" && this.color != move.getPiece().getColor())
+        {
+            return true;
+        }
+
         string direction = "";
 
         // on récupère la position target du mouvement et ses coordonnées
@@ -111,82 +133,52 @@ public class Piece : MonoBehaviour
         int stepX; // direction du pas en x
         int stepY; // direction du pas en Y
 
-        Position nextPieceFoundPosition;
+        Position scanPos;
 
-        // on cherche la direction du mouvement pour vérifier qu'il n'y a pas de pièce adverse sur la route
-        // changer pour mettre directement les step ici /////////////////////////////////////////////////
-        if (targetY == posY && targetX < posX) { direction = "Left"; stepX = -1; stepY = 0 } // Left
+        // Si la direction est "Bottom", "BottomRightCorner" ou "BottomLeftCorner", 
+        // on se déplace vers le bas (ligne négative : -1), sinon vers le haut (+1).
+        int stepY = (targetY > posY && targetX == posX) || (targetY > posY && targetX < posX) || (targetY > posY && targetX > posX) ? -1 : 1;
 
-        else if (targetY == posY && targetX > posX) { direction = "Right"; stepX = 1; stepY = 0 } // Right
+        // Si la direction est "Right", "BottomRightCorner" ou "TopRightCorner",
+        // on se déplace vers la droite (colonne positive : +1), sinon vers la gauche (-1).
+        int stepX = (targetY == posY && targetX > posX) || (targetY < posY && targetX > posX) || (targetY > posY && targetX > posX) ? 1 : -1;
 
-        else if (targetY < posY && targetX == posX) { direction = "Top"; stepX = 0; stepY = 1 } // Top
-
-        else if (targetY > posY && targetX == posX) { direction = "Bottom"; stepX = 0; stepY = -1 } // Bottom
-
-        else if (target.distanceY(this.getPosition()) == target.distanceX(this.getPosition()))
+        // Si la direction est strictement horizontale ("Left" ou "Right"),
+        // il n'y a pas de mouvement vertical, donc on met stepY à 0.
+        if ((targetY == posY && targetX < posX) || (targetY == posY && targetX > posX))
         {
-            if (targetY < posY && targetX > posX) { direction = "TopRightCorner"; stepX = 1; stepY = 1 } // TopRightCorner
-
-            else if (targetY < posY && targetX < posX) { direction = "TopLeftCorner"; stepX = -1; stepY = 1 } // TopLeftCorner
-
-            else if (targetY > posY && targetX < posX) { direction = "BottomLeftCorner"; stepX = 1; stepY = -1 } // BottomLeftCorner
-
-            else if (targetY > posY && targetX > posX) { direction = "BottomRightCorner"; stepX = -1; stepY = -1 } // BottomRightCorner
+            stepY = 0;
+        }
+        // Si la direction est strictement verticale ("Bottom" ou "Top"),
+        // il n'y a pas de mouvement horizontal, donc on met stepX à 0.
+        else if ((targetY < posY && targetX == posX) || (targetY > posY && targetX == posX))
+        {
+            stepX = 0;
         }
 
-        // on déclare une position (qui va changer) pour la prochaine pièce trouvée dans la direction du mouvement
-        nextPieceFoundPosition = this.position.copy();
+        // on initialise une position (qui va changer) pour la prochaine pièce trouvée dans la direction du mouvement
+        // et qui démarre à la position de la pièce actuelle (this)
+        scanPos = this.position.copy();
 
         // puis on déplace la position dans la direction donnée jusqu'à trouver une case non vide
         // ou atteindre la position target du mouvement étudié
-        while (isNotOut(nextPieceFoundPosition) 
-            && !nextPieceFoundPosition.equals(target) 
-            && chessBoard.getPiece(nextPieceFoundPosition) == null)
+        while (isNotOut(scanPos)
+            && !scanPos.equals(target)
+            && chessBoard.getPiece(scanPos) == null)
         {
-            nextPieceFoundPosition.incrementXY(stepX, stepY);
+            scanPos.incrementXY(stepX, stepY);
         }
 
-        // if (!nextPieceFoundPosition.equals(target))
-        
-        return false;
-    }
+        // Si la case sur laquelle on s'est arrêté est différente de la target du move
+        // ou que la case comporte une pièce de même couleur, alors le move n'est pas valide (passage à travers une pièce)
+        if (!scanPos.equals(target) || chessBoard.getPiece(scanPos).getColor() == this.color)
+        {
+            return false;
+        }
 
-    /*
-        compare la distance entre piece de this-p1 et this-p2 et retourne le résultat
-        en gros : return |this-p2 - this-p1|
-    */
-    public bool compareDistance(Piece p1, Piece p2, string direction)
-    {
-        int p1X = p1.getX();
-        int p1Y = p1.getY();
-        int p2X = p2.getX();
-        int p2Y = p2.getY();
-        // à faire ///////////////////////////////////////////////////
-        int distance_pos_piece;
-        int distance_pos_target;
-        // comparer |x1 - x2 + y1 - y2| et |x3 - x4 + y3 - y4| quand ligne droite
-        // si diagonale comparer que avec x ou y
-        if (direction == "Right"
-            || direction == "Left"
-            || direction == "Top"
-            || direction == "Bottom")
-        {
-            // si la direction est en ligne droite, on initialise la distance [pièce rencontré]-[position initiale]
-            // à |posX - pieceX + posY - pieceY|
-            // et la distance à parcourir pour effectuer le mouvement voulu par le joueur
-            // à |posX - targetX + posY - targetY|
-            distance_pos_piece = Mathf.Abs(move.getPosition().getX() - target.line + move.posColumn - target.column);
-            distance_pos_target = Mathf.Abs(move.posLine - move.targetLine + move.posColumn - move.targetColumn);
-        }
-        else
-        {
-            // sinon on initialise en ne faisant la différence que de x ou y car si on fait l'addition,
-            // le calcul donnera toujours 0.
-            distance_pos_piece = Mathf.Abs(move.posLine - target.line);
-            distance_pos_target = Mathf.Abs(move.poLine - move.targetLine);
-        }
-        // comparer les résultats et retourner
-        return false; // a changer
+        // on ne passe jamais au dessus d'une pièce et on ne s'arrête pas sur une case remplie par une pièce
+        // de la même couleur
+        return true;
     }
 
     // King
