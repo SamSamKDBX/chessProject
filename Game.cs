@@ -59,7 +59,7 @@ public class Game : MonoBehaviour
         Position pos = new Position(4, 1); // position du pion blanc devant le roi (e2);
         piece = chessBoard.getPiece(pos); // le pion e2
         Position target = new Position(4, 3); // la target
-        Move move_test = new Move(piece, pos); // on créé un nouveau move avec la pièce et la position target
+        Move move_test = new Move(piece, 4, 1); // on créé un nouveau move avec la pièce et la position target
         bool validMove = piece.moveTo(move_test, chessBoard); // on essaye de déplacer la pièce
         if (!validMove) {
             print("e4 invalide");

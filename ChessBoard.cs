@@ -46,7 +46,7 @@ public class ChessBoard
         et modifie le champ position de la pièce
     */
     // précondition : le coup doit etre valide
-    public void movePiece(Position p, Piece piece)
+    public void movePieceInChessBoard(Position p, Piece piece)
     {
         // on ajoute la position avant mouvement à la liste des dernieres positions
         piece.latestPositions.add(piece.position);
@@ -101,7 +101,7 @@ public class ChessBoard
         {
             for (int j = 0; j < 8; j++)
             {
-                Piece p = this.chessBoard[j, i]
+                Piece p = this.chessBoard[j, i];
                 if (p.getName() == "King" && p.getColor() == color)
                 {
                     return p;
