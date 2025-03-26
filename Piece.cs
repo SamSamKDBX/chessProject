@@ -61,7 +61,6 @@ public class Piece : MonoBehaviour
         this.position = p;
     }
 
-    public void
 
     public bool neverMadeMove()
     {

@@ -39,6 +39,12 @@ public class ChessBoard
         piece.setChessBoard(this);
     }
 
+    public void getKing(string color) {
+        for (int i = 0; i < 8; i++) {
+            // faire le deuxieme for et retourner king
+        }
+    }
+
     /*
         Fonction qui déplace une pièce donnée à une position données 
         dans le tableau chessBoard
