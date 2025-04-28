@@ -1,0 +1,7 @@
+piece.getKing
+mouvement en jeu avant la fin de la fonction Piece.moveTo
+
+refaire une methode scan
+refaire piece.isWayClear en utilisant scan
+
+revoir isCheck pour opti

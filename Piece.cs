@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using System.IO.Pipes;
 
 public class Piece : MonoBehaviour
 {
@@ -49,6 +51,11 @@ public class Piece : MonoBehaviour
     public Position getLastPosition()
     {
         return this.latestPositions.Last();
+    }
+
+    public void setLastPosition(Position pos)
+    {
+        this.latestPositions.Add(pos);
     }
 
     public void setChessBoard(ChessBoard cb)
@@ -177,7 +184,7 @@ public class Piece : MonoBehaviour
         }
 
         // on ne passe jamais au dessus d'une pièce et on ne s'arrête pas sur une case remplie par une pièce
-        // de la même couleur
+        // de la même couleur, donc tout va bien
         return true;
     }
 
@@ -267,7 +274,7 @@ public class Piece : MonoBehaviour
         }
         else if (targetY == posY + direction && target.distanceX(this.position) == 1)
         {
-            Piece lastMovedPiece = move.getLastMove().getPiece();
+            Piece lastMovedPiece = this.chessBoard.getLastMoveFromHistory().getPiece();
 
             // si le pion se déplace d'une case en diagonale sur une case occuppée par un pion adverse
             if (this.chessBoard.getPiece(target) != null
@@ -288,10 +295,13 @@ public class Piece : MonoBehaviour
         return false;
     }
 
-    public static bool isAttacked(Move move, ChessBoard chessBoard)
+    // vérifie si la case move.position est attaquée
+    public bool isCheck(Move move, ChessBoard chessBoard)
     {
-        // on créer une structure position
-        Position pos = new Position(move.getPosition().getX(), move.targetColumn);
+        // on créer une position temporaire 
+        Position pos = new Position(move.getPosition().getX(), move.getPosition().getX());
+        // une piece temporaire
+        Piece queenOrKing;
 
         string[] directions = {
             "Bottom",
@@ -304,47 +314,71 @@ public class Piece : MonoBehaviour
             "BottomLeftCorner"
         };
 
+        // des indices utiles
+        int i;
+        int j;
+
         // on regarde si le roi ou la reine adverse est a proximité
-        for (int i = -1; i < 2; i++)
+        // dans un carré de 9 cases autour de la case à vérifier
+        for (i = -1; i < 2; i++)
         {
-            for (int j = -1; j < 2; j++)
+            for (j = -1; j < 2; j++)
             {
-                pos.line = move.targetLine + i;
-                pos.column = move.targetColumn + j;
-                if (isInChessBoard(pos)
-                    && chessBoard[pos.line, pos.column].pieceColor != move.pieceColor
-                    && (chessBoard[pos.line, pos.column].pieceName == "King"
-                    || chessBoard[pos.line, pos.column].pieceName == "Queen"))
+                pos.setPosition(pos.getX() + i, pos.getY() + j);
+                queenOrKing = chessBoard.getPiece(pos);
+                if (queenOrKing != null
+                    && queenOrKing.getColor() != this.color
+                    && (queenOrKing.getName() == "King"
+                    || queenOrKing.getName() == "Queen"))
                 {
                     return true;
                 }
             }
         }
 
+        // une autre pièce temporaire et son nom
+        Piece pieceFound;
+        string pieceFoundName;
+
         // on trace une ligne dans chaque direction pour vérifier si une pièce n'attaque pas la case
-        for (int i = 0; i < 8; i++)
+        for (i = 0; i < 8; i++)
         {
-            scan.toThe(directions[i], pos, chessBoard)
-            if (chessBoard[pos.line, pos.column].pieceColor != move.pieceColor)
+            // on réinitialise la position temporaire à la position de la pièce étudiée
+            pos.setPosition(this.getX(), this.getY());
+
+            // on regarde la permière piece touvée dans une direction donnée
+            chessBoard.findNextPiece(directions[i], pos);
+            pieceFound = chessBoard.getPiece(pos);
+            pieceFoundName = pieceFound.getName();
+            // si c'est une pièce adverse,
+            if (pieceFound.getColor() != this.color)
             {
-                if (i < 4 && (chessBoard[pos.line, pos.column].pieceName == "Rook"
-                    || chessBoard[pos.line, pos.column].pieceName == "Queen"))
+                // si il y a une reine ou une tour adverse qui attaque la case en ligne droite
+                if (i < 4 && (pieceFoundName == "Rook"
+                    || pieceFoundName == "Queen"))
                 {
-                    // si il y a une reine ou une tour adverse qui attaque la case en ligne droite
                     return true;
                 }
-                else if (i >= 4 && (chessBoard[pos.line, pos.column].pieceName == "Bishop"
-                    || chessBoard[pos.line, pos.column].pieceName == "Queen"
-                    || chessBoard[pos.line, pos.column].pieceName == "Pawn"
-                    && pos.line == move.targetLine + 1
-                    && Mathf.Abs(move.targetColumn - pos.column) == 1))
+                else if (i >= 4)
                 {
-                    // si il y a un fou, la reine qui attaque en diagonale ou un pion proche
-                    return true;
+                    // une reine ou un fou en diagonale
+                    if (pieceFoundName == "Bishop"
+                        || pieceFoundName == "Queen")
+                    {
+                        return true;
+                    }
+                    else if (pieceFoundName == "Pawn"
+                        && (pieceFound.getColor() == "Black"
+                        && pieceFound.getY() == this.getY() + 1
+                        || pieceFound.getColor() == "White"
+                        && pieceFound.getY() == this.getY() - 1)
+                        && Mathf.Abs(move.getPosition().getX() - this.getX()) == 1)
+                    {
+                        // si il y a un pion proche adverse en diagonale
+                        return true;
+                    }
                 }
             }
-            pos.line = move.targetLine;
-            pos.column = move.targetColumn;
         }
 
         // on vérifie les cavaliers adverse à ces cases là :
@@ -355,18 +389,17 @@ public class Piece : MonoBehaviour
             X . . . X
             . X . X .
         */
-        int i = -2;
-        int j = -2;
+        i = -2;
+        j = -2;
         while (i < 3)
         {
             while (j < 3)
             {
-                pos.line = move.targetLine + i;
-                pos.column = move.targetColumn + j;
+                pos.setPosition(this.getX() + i, this.getY() + j);
                 if (chessBoard.isNotOut(pos)
                     && (Mathf.Abs(i) == 1 && Mathf.Abs(j) == 2 || Mathf.Abs(i) == 2 && Mathf.Abs(j) == 1)
-                    && chessBoard[pos.line, pos.column].pieceColor != move.pieceColor
-                    && (chessBoard[pos.line, pos.column].pieceName == "Knight"))
+                    && chessBoard.getPiece(pos).getColor() != this.getColor()
+                    && (chessBoard.getPiece(pos).getName() == "Knight"))
                 {
                     return true;
                 }

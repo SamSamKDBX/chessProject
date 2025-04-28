@@ -81,9 +81,4 @@ public class Game : MonoBehaviour
             default: return "Error";
         }
     }
-
-    void Update()
-    {
-
-    }
 }
