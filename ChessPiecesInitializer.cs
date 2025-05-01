@@ -51,10 +51,10 @@ public class ChessPieceinitializer : MonoBehaviour
         GameObject whiteBishop1 = Instantiate(whiteBishopPrefab, new Vector3(2, -7, 0), Quaternion.identity, transform);
         whiteBishop1.name = "WhiteBishop_1";
         
-        GameObject whiteKing = Instantiate(whiteKingPrefab, new Vector3(3, -7, 0), Quaternion.identity, transform);
+        GameObject whiteKing = Instantiate(whiteKingPrefab, new Vector3(4, -7, 0), Quaternion.identity, transform);
         whiteKing.name = "WhiteKing";
 
-        GameObject whiteQueen = Instantiate(whiteQueenPrefab, new Vector3(4, -7, 0), Quaternion.identity, transform);
+        GameObject whiteQueen = Instantiate(whiteQueenPrefab, new Vector3(3, -7, 0), Quaternion.identity, transform);
         whiteQueen.name = "WhiteQueen";
         
         GameObject whiteBishop2 = Instantiate(whiteBishopPrefab, new Vector3(5, -7, 0), Quaternion.identity, transform);
@@ -76,10 +76,10 @@ public class ChessPieceinitializer : MonoBehaviour
         GameObject blackBishop1 = Instantiate(blackBishopPrefab, new Vector3(2, 0, 0), Quaternion.identity, transform);
         blackBishop1.name = "BlackBishop_1";
         
-        GameObject blackKing = Instantiate(blackKingPrefab, new Vector3(3, 0, 0), Quaternion.identity, transform);
+        GameObject blackKing = Instantiate(blackKingPrefab, new Vector3(4, 0, 0), Quaternion.identity, transform);
         blackKing.name = "BlackKing";
         
-        GameObject blackQueen = Instantiate(blackQueenPrefab, new Vector3(4, 0, 0), Quaternion.identity, transform);
+        GameObject blackQueen = Instantiate(blackQueenPrefab, new Vector3(3, 0, 0), Quaternion.identity, transform);
         blackQueen.name = "BlackQueen";
         
         GameObject blackBishop2 = Instantiate(blackBishopPrefab, new Vector3(5, 0, 0), Quaternion.identity, transform);

@@ -6,7 +6,4 @@ refaire piece.isWayClear en utilisant scan
 
 revoir isCheck pour opti
 
-
-Unity :
-    Revoir ChessBoard.Awake()
-    Revoir Game.Start()
+revoir les coups légaux pour e4 valid

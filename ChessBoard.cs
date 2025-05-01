@@ -1,24 +1,21 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using System;
-using Unity.Collections;
-using Unity.VisualScripting;
 
 public class ChessBoard : MonoBehaviour
 {
-    public List<Piece> pieces;
-    private GameObject Pieces;
+    private List<Piece> pieces;
+    public GameObject Pieces;
     private Piece[,] chessBoard;
     private readonly string[,] squareNames = {
-        {"8a", "8b", "8c", "8d", "8e", "8f", "8g", "8h"},
-        {"7a", "7b", "7c", "7d", "7e", "7f", "7g", "7h"},
-        {"6a", "6b", "6c", "6d", "6e", "6f", "6g", "6h"},
-        {"5a", "5b", "5c", "5d", "5e", "5f", "5g", "5h"},
-        {"4a", "4b", "4c", "4d", "4e", "4f", "4g", "4h"},
-        {"3a", "3b", "3c", "3d", "3e", "3f", "3g", "3h"},
-        {"2a", "2b", "2c", "2d", "2e", "2f", "2g", "2h"},
-        {"1a", "1b", "1c", "1d", "1e", "1f", "1g", "1h"}
+        {"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"},
+        {"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7"},
+        {"a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"},
+        {"a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5"},
+        {"a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4"},
+        {"a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3"},
+        {"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2"},
+        {"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"}
     };
     private List<Move> movesHistory;
     private List<Piece> capturedBlackPieces;
@@ -26,6 +23,7 @@ public class ChessBoard : MonoBehaviour
 
     void Awake()
     {
+        this.pieces = new List<Piece>();
         this.movesHistory = new List<Move>();
         this.capturedBlackPieces = new List<Piece>();
         this.capturedWhitePieces = new List<Piece>();
@@ -44,10 +42,10 @@ public class ChessBoard : MonoBehaviour
               -----------------------
                0  1  2  3  4  5  6  7 
         */
-        Pieces = GameObject.Find("Pieces");
-        foreach (Piece child in Pieces.transform) {
-            pieces.Add(child);
-            Debug.Log("add " + child.name);
+        foreach (Transform child in Pieces.transform)
+        {
+            pieces.Add(child.GetComponent<Piece>());
+            // Debug.Log("add " + pieces.Last().name);
         }
         this.chessBoard = new Piece[8, 8];
         // on rempli d'abord de cases vides
@@ -58,11 +56,14 @@ public class ChessBoard : MonoBehaviour
                 this.chessBoard[y, x] = null;
             }
         }
+        // print();
         // puis on rajoute les pièces
         foreach (Piece piece in pieces)
         {
-            int x = (int)piece.transform.localPosition.x;
-            int y = (int)piece.transform.localPosition.y;
+            // print("for piece : " + piece.name);
+            int x = (int)piece.transform.position.x;
+            int y = (int)piece.transform.position.y;
+            // print($"try to add piece in [{-y}, {x}]");
             this.chessBoard[-y, x] = piece;
         }
         // on remplie les attributs des pièces
@@ -161,6 +162,12 @@ public class ChessBoard : MonoBehaviour
         this.chessBoard[piece.getY(), piece.getX()] = null;
         // on met à jour la position de la pièce déplacée
         piece.setPosition(p);
+
+        // on bouge la pièce dans la vue du jeu
+        piece.transform.position = new Vector3(piece.getX(), -4, -1);
+
+        // debug affichage
+        print($"{piece.name} moved to ({piece.getX()}, {piece.getY()})");
     }
 
     public void capturePiece(Piece p)
@@ -183,7 +190,7 @@ public class ChessBoard : MonoBehaviour
         {
             return true;
         }
-        print("position out of board");
+        // print("position out of board");
         return false;
     }
 
@@ -192,7 +199,7 @@ public class ChessBoard : MonoBehaviour
     {
         if (isNotOut(p))
         {
-            print($"getPiece({p})");
+            // print($"getPiece({p.getX()}, {p.getY()}) = {this.chessBoard[p.getY(), p.getX()]}");
             return this.chessBoard[p.getY(), p.getX()];
         }
         return null;
@@ -206,7 +213,7 @@ public class ChessBoard : MonoBehaviour
             for (int j = 0; j < 8; j++)
             {
                 Piece p = this.chessBoard[j, i];
-                if (p.getName() == "King" && p.getColor() == color)
+                if (p != null && p.getName() == "King" && p.getColor() == color)
                 {
                     return p;
                 }
@@ -265,12 +272,17 @@ public class ChessBoard : MonoBehaviour
         {
             posX = position.getX();
             posY = position.getY();
-            if (this.chessBoard[posY, posX] == null)
+            if (this.chessBoard[posY, posX] == null || posX == position.getX() && posY == position.getY())
             {
-                position.setPosition(posX + stepX, posY + stepY);
+                position.incrementXY(stepX, stepY);
+            }
+            else {
+                break;
             }
         }
-
+        if (this.getPiece(position) != null) {
+            print($"piece found at ({position.getX()}, {position.getY()}) : {this.getPiece(position).name}");
+        }
         // je sais plus pourquoi j'ai mis ca...
         // on rajoute la direction de là ou on viens à la position de la case sur laquelle on est tombé
         // position.directionFromColumn = stepX;
@@ -289,43 +301,85 @@ public class ChessBoard : MonoBehaviour
 
     public string toString()
     {
+        /*
+            7| ♖  ♘  ♗  ♕  ♔  ♗  ♘  ♖  Black
+            6| ♙  ♙  ♙  ♙  ♙  ♙  ♙  ♙
+            5| ◼  ◻  ◼  ◻  ◼  ◻  ◼  ◻
+            4| ◻  ◼  ◻  ◼  ◻  ◼  ◻  ◼
+            3| ◼  ◻  ◼  ◻  ◼  ◻  ◼  ◻
+            2| ◻  ◼  ◻  ◼  ◻  ◼  ◻  ◼
+            1| ♟  ♟  ♟  ♟  ♟  ♟  ♟  ♟
+            0| ♜  ♞  ♝  ♛  ♚  ♝  ♞  ♜  White
+              -----------------------
+               0  1  2  3  4  5  6  7 
+        */
         Position p = new Position(0, 0);
+        Piece piece;
         string str = "";
         for (int y = 0; y < 8; y++)
         {
-            str += "----------------------------------\n";
+            str += 8 - y + "|";
             for (int x = 0; x < 8; x++)
             {
                 p.setPosition(x, y);
-                str += "|";
-                switch (this.getPiece(p).getName())
+                piece = this.getPiece(p);
+                if (piece == null)
                 {
-                    case "King":
-                        str += "K";
-                        break;
-                    case "Queen":
-                        str += "Q";
-                        break;
-                    case "Bishop":
-                        str += "b";
-                        break;
-                    case "Knight":
-                        str += "k";
-                        break;
-                    case "Rook":
-                        str += "r";
-                        break;
-                    case "Pawn":
-                        str += "p";
-                        break;
-                    case null:
-                        str += "  ";
-                        break;
+                    str += " ◻ ";
+                    continue;
                 }
-                str += "|\n";
+                if (piece.getColor() == "Black")
+                {
+                    switch (piece.getName())
+                    {
+                        case "King":
+                            str += " ♔ ";
+                            break;
+                        case "Queen":
+                            str += " ♕ ";
+                            break;
+                        case "Bishop":
+                            str += " ♗ ";
+                            break;
+                        case "Knight":
+                            str += " ♘ ";
+                            break;
+                        case "Rook":
+                            str += " ♖ ";
+                            break;
+                        case "Pawn":
+                            str += " ♙ ";
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (piece.getName())
+                    {
+                        case "King":
+                            str += " ♚ ";
+                            break;
+                        case "Queen":
+                            str += " ♛ ";
+                            break;
+                        case "Bishop":
+                            str += " ♝ ";
+                            break;
+                        case "Knight":
+                            str += " ♞ ";
+                            break;
+                        case "Rook":
+                            str += " ♜ ";
+                            break;
+                        case "Pawn":
+                            str += " ♟ ";
+                            break;
+                    }
+                }
             }
+            str += "\n";
         }
-        str += "----------------------------------\n";
+        str += "    -----------------------\n     a   b   c   d   e   f   g   h";
         return str;
     }
 }

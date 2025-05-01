@@ -36,7 +36,7 @@ public class ClickD1 : MonoBehaviour
     void TryMovePiece(GameObject piece, Vector3 newPosition)
     {
         // on affiche le plateau de jeu
-        chess.printChessBoard(chess.board);
+        //chess.printChessBoard(chess.board);
         
         // Ici, tu peux ajouter des vérifications pour savoir si le mouvement est valide
         Debug.Log($"{piece.name} tente de se déplacer vers {newPosition}");
