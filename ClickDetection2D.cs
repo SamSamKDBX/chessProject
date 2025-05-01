@@ -20,17 +20,17 @@ public class ClickDetection2D : MonoBehaviour
                 {
                     // Code à exécuter lorsqu'on clique sur l'objet
                     // attendre que le joueur clique sur une autre case
-                    
 
-                    Debug.Log("L'objet 2D a été cliqué !");
-                    // position du pion test
+                    Debug.Log("L'objet " + this.name + "a été cliqué");
+ 
+                    /* // position du pion test
                     structure.s_position pos = new structure.s_position(6, 4);
                     // position cible test
                     structure.s_position target = new structure.s_position(5, 4);
                     // mouvement de test
                     structure.s_move move = new structure.s_move(chess.board[pos.line, pos.column].piece, pos, target);
                     legalMove.movePiece(move, chess.board);
-                    chess.printChessBoard(chess.board);
+                    chess.printChessBoard(chess.board); */
                 }
             }
         }

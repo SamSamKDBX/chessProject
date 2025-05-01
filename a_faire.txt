@@ -5,3 +5,8 @@ refaire une methode scan
 refaire piece.isWayClear en utilisant scan
 
 revoir isCheck pour opti
+
+
+Unity :
+    Revoir ChessBoard.Awake()
+    Revoir Game.Start()

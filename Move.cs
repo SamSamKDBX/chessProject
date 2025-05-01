@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class Move
 {
     private Piece piece;

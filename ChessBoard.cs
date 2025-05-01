@@ -1,20 +1,122 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System;
 using System.Linq;
+using System;
+using Unity.Collections;
+using Unity.VisualScripting;
 
-public class ChessBoard
+public class ChessBoard : MonoBehaviour
 {
+    public List<Piece> pieces;
+    private GameObject Pieces;
     private Piece[,] chessBoard;
+    private readonly string[,] squareNames = {
+        {"8a", "8b", "8c", "8d", "8e", "8f", "8g", "8h"},
+        {"7a", "7b", "7c", "7d", "7e", "7f", "7g", "7h"},
+        {"6a", "6b", "6c", "6d", "6e", "6f", "6g", "6h"},
+        {"5a", "5b", "5c", "5d", "5e", "5f", "5g", "5h"},
+        {"4a", "4b", "4c", "4d", "4e", "4f", "4g", "4h"},
+        {"3a", "3b", "3c", "3d", "3e", "3f", "3g", "3h"},
+        {"2a", "2b", "2c", "2d", "2e", "2f", "2g", "2h"},
+        {"1a", "1b", "1c", "1d", "1e", "1f", "1g", "1h"}
+    };
     private List<Move> movesHistory;
     private List<Piece> capturedBlackPieces;
     private List<Piece> capturedWhitePieces;
 
-    public ChessBoard()
+    void Awake()
     {
         this.movesHistory = new List<Move>();
         this.capturedBlackPieces = new List<Piece>();
         this.capturedWhitePieces = new List<Piece>();
+        Piece tempPiece;
+
+        // Remplissage du plateau
+        /*
+            7| ♖  ♘  ♗  ♕  ♔  ♗  ♘  ♖  Black
+            6| ♙  ♙  ♙  ♙  ♙  ♙  ♙  ♙
+            5| ◼  ◻  ◼  ◻  ◼  ◻  ◼  ◻
+            4| ◻  ◼  ◻  ◼  ◻  ◼  ◻  ◼
+            3| ◼  ◻  ◼  ◻  ◼  ◻  ◼  ◻
+            2| ◻  ◼  ◻  ◼  ◻  ◼  ◻  ◼
+            1| ♟  ♟  ♟  ♟  ♟  ♟  ♟  ♟
+            0| ♜  ♞  ♝  ♛  ♚  ♝  ♞  ♜  White
+              -----------------------
+               0  1  2  3  4  5  6  7 
+        */
+        Pieces = GameObject.Find("Pieces");
+        foreach (Piece child in Pieces.transform) {
+            pieces.Add(child);
+            Debug.Log("add " + child.name);
+        }
+        this.chessBoard = new Piece[8, 8];
+        // on rempli d'abord de cases vides
+        for (int y = 0; y < 8; y++)
+        {
+            for (int x = 0; x < 8; x++)
+            {
+                this.chessBoard[y, x] = null;
+            }
+        }
+        // puis on rajoute les pièces
+        foreach (Piece piece in pieces)
+        {
+            int x = (int)piece.transform.localPosition.x;
+            int y = (int)piece.transform.localPosition.y;
+            this.chessBoard[-y, x] = piece;
+        }
+        // on remplie les attributs des pièces
+        for (int y = 0; y < 8; y++)
+        {
+            for (int x = 0; x < 8; x++)
+            {
+                tempPiece = this.chessBoard[y, x];
+                if (y == 1)
+                {
+                    tempPiece.setAttributes("Pawn", "White", x, y);
+                }
+                else if (y == 6)
+                {
+                    tempPiece.setAttributes("Pawn", "Black", x, y);
+                }
+                else if (y == 0)
+                {
+                    tempPiece.setAttributes(getPieceName(x), "White", x, y);
+                }
+                else if (y == 7)
+                {
+                    tempPiece.setAttributes(getPieceName(x), "Black", x, y);
+                }
+                else
+                {
+                    continue;
+                }
+            }
+        }
+        print();
+    }
+
+    private string getPieceName(int columnIndex)
+    {
+        switch (columnIndex)
+        {
+            case 0: return "Rook";
+            case 1: return "Knight";
+            case 2: return "Bishop";
+            case 3: return "Queen";
+            case 4: return "King";
+            case 5: return "Bishop";
+            case 6: return "Knight";
+            case 7: return "Rook";
+            default: return "Error";
+        }
+    }
+    /* public ChessBoard()
+    {
+        this.movesHistory = new List<Move>();
+        this.capturedBlackPieces = new List<Piece>();
+        this.capturedWhitePieces = new List<Piece>();
+
         this.chessBoard = new Piece[8, 8];
         for (int y = 0; y < 8; y++)
         {
@@ -23,18 +125,12 @@ public class ChessBoard
                 this.chessBoard[y, x] = null;
             }
         }
-    }
+    } */
 
     public void addPiece(Piece piece)
     {
         int x = piece.getX();
         int y = piece.getY();
-
-        if (x < 0 || x > 7 || y < 0 || y > 7)
-        {
-            throw new System.Exception("Erreur. Conditions : (0 < x < 8) && (0 < y < 8)");
-        }
-
         this.chessBoard[y, x] = piece;
         piece.setChessBoard(this);
     }
@@ -87,6 +183,7 @@ public class ChessBoard
         {
             return true;
         }
+        print("position out of board");
         return false;
     }
 
@@ -95,7 +192,8 @@ public class ChessBoard
     {
         if (isNotOut(p))
         {
-            return this.chessBoard[p.getX(), p.getY()];
+            print($"getPiece({p})");
+            return this.chessBoard[p.getY(), p.getX()];
         }
         return null;
     }
@@ -177,6 +275,11 @@ public class ChessBoard
         // on rajoute la direction de là ou on viens à la position de la case sur laquelle on est tombé
         // position.directionFromColumn = stepX;
         // position.directionFromLine = stepY;
+    }
+
+    public string getSquareName(Position pos)
+    {
+        return this.squareNames[7 - pos.getX(), pos.getY()];
     }
 
     public void print()

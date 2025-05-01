@@ -1,21 +1,20 @@
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using System.IO.Pipes;
 
 public class Piece : MonoBehaviour
 {
-    private string name;
+    private string Name;
     private string color;
     private Position position;
     private List<Position> latestPositions;
     private bool hasNeverMoved;
     private ChessBoard chessBoard;
+    public GameObject thisComponent;
 
-    public Piece(string name, string color, int x, int y)
+    public void setAttributes(string Name, string color, int x, int y)
     {
-        this.name = name;
+        this.Name = Name;
         this.color = color;
         this.position = new Position(x, y);
         this.hasNeverMoved = true;
@@ -25,7 +24,7 @@ public class Piece : MonoBehaviour
 
     public string getName()
     {
-        return this.name;
+        return this.Name;
     }
 
     public string getColor()
@@ -87,17 +86,17 @@ public class Piece : MonoBehaviour
         // sont réunies, on déplace la pièce
         if (!target.equals(move.getPosition())
             && chessBoard.isNotOut(target)
-            && (this.isWayClear(move, chessBoard) || this.name == "Knight")
+            && (this.isWayClear(move, chessBoard) || this.Name == "Knight")
             && this.isLegalMove(move))
         {
             // on bouge dans le tableau chessBoard
             chessBoard.movePieceInChessBoard(target, this);
             // si le roi est en échec après le mouvement, on reviens à la position initiale
-            if (chessBoard.getKing(this.color).isCheck()) // a faire ///////////////////////////
+            if (chessBoard.getKing(this.color).isCheck(move, chessBoard))
             {
                 chessBoard.movePieceInChessBoard(this.latestPositions.Last(), this);
                 this.latestPositions.RemoveAt(this.latestPositions.Count - 1);
-                print("You cannot put the king in check");
+                Debug.Log("You cannot put the king in check");
                 return false;
             }
             chessBoard.addMoveToHistory(move);
@@ -108,7 +107,7 @@ public class Piece : MonoBehaviour
 
     public bool isLegalMove(Move move)
     {
-        switch (this.name)
+        switch (this.Name)
         {
             case "King": return this.isKingLegalMove(move);
             case "Queen": return this.isQueenLegalMove(move);
@@ -123,7 +122,7 @@ public class Piece : MonoBehaviour
     // pas encore vérifié
     private bool isWayClear(Move move, ChessBoard chessBoard)
     {
-        if (this.name == "Knight" && this.color != move.getPiece().getColor())
+        if (this.Name == "Knight" && this.color != move.getPiece().getColor())
         {
             return true;
         }
@@ -301,7 +300,7 @@ public class Piece : MonoBehaviour
         // on créer une position temporaire 
         Position pos = new Position(move.getPosition().getX(), move.getPosition().getX());
         // une piece temporaire
-        Piece queenOrKing;
+        Piece tempPiece;
 
         string[] directions = {
             "Bottom",
@@ -314,24 +313,35 @@ public class Piece : MonoBehaviour
             "BottomLeftCorner"
         };
 
-        // des indices utiles
-        int i;
-        int j;
-
-        // on regarde si le roi ou la reine adverse est a proximité
-        // dans un carré de 9 cases autour de la case à vérifier
-        for (i = -1; i < 2; i++)
+        // on regarde si un cavalier, le roi ou la reine adverse est a proximité
+        // dans un carré de 16 cases autour de la case à vérifier
+        for (int i = -2; i < 3; i++)
         {
-            for (j = -1; j < 2; j++)
+            for (int j = -2; j < 3; j++)
             {
                 pos.setPosition(pos.getX() + i, pos.getY() + j);
-                queenOrKing = chessBoard.getPiece(pos);
-                if (queenOrKing != null
-                    && queenOrKing.getColor() != this.color
-                    && (queenOrKing.getName() == "King"
-                    || queenOrKing.getName() == "Queen"))
+                tempPiece = chessBoard.getPiece(pos);
+                if (tempPiece != null && tempPiece.getColor() != this.color)
                 {
-                    return true;
+                    // on vérifie les cavaliers adverse à ces cases là :
+                    /*
+                        . X . X .
+                        X . . . X
+                        . . O . .
+                        X . . . X
+                        . X . X .
+                    */
+                    if ((Mathf.Abs(i) == 1 && Mathf.Abs(j) == 2 || Mathf.Abs(i) == 2 && Mathf.Abs(j) == 1)
+                        && (tempPiece.getName() == "Knight"))
+                    {
+                        return true;
+                    }
+                    else if (Mathf.Abs(i) == 1 && Mathf.Abs(j) == 1
+                        && (tempPiece.getName() == "King"
+                        || tempPiece.getName() == "Queen"))
+                    {
+                        return true;
+                    }
                 }
             }
         }
@@ -341,7 +351,7 @@ public class Piece : MonoBehaviour
         string pieceFoundName;
 
         // on trace une ligne dans chaque direction pour vérifier si une pièce n'attaque pas la case
-        for (i = 0; i < 8; i++)
+        for (int i = 0; i < 8; i++)
         {
             // on réinitialise la position temporaire à la position de la pièce étudiée
             pos.setPosition(this.getX(), this.getY());
@@ -349,24 +359,28 @@ public class Piece : MonoBehaviour
             // on regarde la permière piece touvée dans une direction donnée
             chessBoard.findNextPiece(directions[i], pos);
             pieceFound = chessBoard.getPiece(pos);
-            pieceFoundName = pieceFound.getName();
             // si c'est une pièce adverse,
-            if (pieceFound.getColor() != this.color)
+            if (pieceFound != null && pieceFound.getColor() != this.color)
             {
-                // si il y a une reine ou une tour adverse qui attaque la case en ligne droite
-                if (i < 4 && (pieceFoundName == "Rook"
-                    || pieceFoundName == "Queen"))
+                pieceFoundName = pieceFound.getName();
+                // s'il y a une reine,
+                if (pieceFoundName == "Queen")
+                {
+                    return true;
+                }
+                // une tour adverse qui attaque la case en ligne droite,
+                else if (i < 4 && pieceFoundName == "Rook")
                 {
                     return true;
                 }
                 else if (i >= 4)
                 {
-                    // une reine ou un fou en diagonale
-                    if (pieceFoundName == "Bishop"
-                        || pieceFoundName == "Queen")
+                    // un fou en diagonale
+                    if (pieceFoundName == "Bishop")
                     {
                         return true;
                     }
+                    // ou un pion proche en diagonale
                     else if (pieceFoundName == "Pawn"
                         && (pieceFound.getColor() == "Black"
                         && pieceFound.getY() == this.getY() + 1
@@ -374,48 +388,53 @@ public class Piece : MonoBehaviour
                         && pieceFound.getY() == this.getY() - 1)
                         && Mathf.Abs(move.getPosition().getX() - this.getX()) == 1)
                     {
-                        // si il y a un pion proche adverse en diagonale
                         return true;
                     }
                 }
             }
         }
 
-        // on vérifie les cavaliers adverse à ces cases là :
-        /*
-            . X . X .
-            X . . . X
-            . . O . .
-            X . . . X
-            . X . X .
-        */
-        i = -2;
-        j = -2;
-        while (i < 3)
-        {
-            while (j < 3)
-            {
-                pos.setPosition(this.getX() + i, this.getY() + j);
-                if (chessBoard.isNotOut(pos)
-                    && (Mathf.Abs(i) == 1 && Mathf.Abs(j) == 2 || Mathf.Abs(i) == 2 && Mathf.Abs(j) == 1)
-                    && chessBoard.getPiece(pos).getColor() != this.getColor()
-                    && (chessBoard.getPiece(pos).getName() == "Knight"))
-                {
-                    return true;
-                }
-                j++;
-            }
-            i++;
-        }
-
-        // si on arrive là c'est que la case n'est pas attaquée
+        // sinon c'est que la case n'est pas attaquée
         return false;
     }
 
-    public void promote()
+    /* public void promote()
     {
         string choosedPiece;
         // choosedPiece = saisie parmi {"Queen", "Bishop", "Rook", "Knight"}
-        // this.name = choosedPiece;
+        // this.Name = choosedPiece;
+    } */
+
+    void Update()
+    {
+        // Vérifie si le bouton gauche de la souris est enfoncé
+        if (Input.GetMouseButtonDown(0))
+        {
+            // Crée un rayon depuis la position de la souris
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
+
+            // Vérifie si un objet a été touché par le rayon
+            if (hit.collider != null)
+            {
+                // Si l'objet cliqué est celui-ci
+                if (hit.collider.gameObject == gameObject)
+                {
+                    // Code à exécuter lorsqu'on clique sur l'objet
+                    // attendre que le joueur clique sur une autre case
+
+                    Debug.Log("L'objet " + this.name + " a été cliqué");
+ 
+                    /* // position du pion test
+                    structure.s_position pos = new structure.s_position(6, 4);
+                    // position cible test
+                    structure.s_position target = new structure.s_position(5, 4);
+                    // mouvement de test
+                    structure.s_move move = new structure.s_move(chess.board[pos.line, pos.column].piece, pos, target);
+                    legalMove.movePiece(move, chess.board);
+                    chess.printChessBoard(chess.board); */
+                }
+            }
+        }
     }
 }
