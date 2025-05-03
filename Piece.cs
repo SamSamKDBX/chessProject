@@ -10,14 +10,24 @@ public class Piece : MonoBehaviour
     private List<Position> latestPositions;
     private bool hasNeverMoved;
     private ChessBoard chessBoard;
+    private readonly string[] directions = {
+            "Bottom",
+            "Right",
+            "Top",
+            "Left",
+            "TopRightCorner",
+            "TopLeftCorner",
+            "BottomRightCorner",
+            "BottomLeftCorner"
+        };
 
-    public void setAttributes(string Name, string color, int x, int y)
+    public void setAttributes(string Name, string color, int x, int y, ChessBoard chessBoard)
     {
         this.Name = Name;
         this.color = color;
         this.position = new Position(x, y);
         this.hasNeverMoved = true;
-        this.chessBoard = null;
+        this.chessBoard = chessBoard;
         this.latestPositions = new List<Position>();
     }
 
@@ -66,10 +76,14 @@ public class Piece : MonoBehaviour
         this.position = p;
     }
 
-
     public bool neverMadeMove()
     {
         return this.hasNeverMoved;
+    }
+
+    public void madeMove()
+    {
+        this.hasNeverMoved = false;
     }
 
     public bool moveTo(Move move, ChessBoard chessBoard)
@@ -115,7 +129,7 @@ public class Piece : MonoBehaviour
             case "Rook": return this.isRookLegalMove(move);
             case "Pawn": return this.isPawnLegalMove(move);
             default:
-                print("move isn't legal"); 
+                print("move isn't legal");
                 return false;
         }
     }
@@ -169,18 +183,20 @@ public class Piece : MonoBehaviour
         // on initialise une position (qui va changer) pour la prochaine pièce trouvée dans la direction du mouvement
         // et qui démarre à la position de la pièce actuelle (this)
         scanPos = this.position.copy();
-        
+
         // puis on déplace la position dans la direction donnée jusqu'à trouver une case non vide
         // ou atteindre la position target du mouvement étudié
         while (chessBoard.isNotOut(scanPos)
             && !scanPos.equals(target))
         {
             scanPos.incrementXY(stepX, stepY);
-            if (chessBoard.getPiece(scanPos) != null) {
+            if (chessBoard.getPiece(scanPos) != null)
+            {
                 print($"scan stoped at ({scanPos.getX()}, {scanPos.getY()}) with piece : {chessBoard.getPiece(scanPos).getName()}");
                 break;
             }
-            else if (scanPos.equals(target)) {
+            else if (scanPos.equals(target))
+            {
                 print($"scan stoped at ({scanPos.getX()}, {scanPos.getY()}) because the target is here");
             }
         }
@@ -322,17 +338,6 @@ public class Piece : MonoBehaviour
         // une piece temporaire
         Piece tempPiece;
 
-        string[] directions = {
-            "Bottom",
-            "Right",
-            "Top",
-            "Left",
-            "TopRightCorner",
-            "TopLeftCorner",
-            "BottomRightCorner",
-            "BottomLeftCorner"
-        };
-
         // on regarde si un cavalier, le roi ou la reine adverse est a proximité
         // dans un carré de 16 cases autour de la case à vérifier
         for (int i = -2; i < 3; i++)
@@ -431,7 +436,157 @@ public class Piece : MonoBehaviour
         // this.Name = choosedPiece;
     } */
 
-    void Update()
+    private void kingPossibleMoves(List<Move> moves)
+    {
+        // opstimisation possible
+        for (int i = -1; i < 2; i++)
+        {
+            for (int j = -1; j < 2; j++)
+            {
+                Move move = new Move(this, this.getX() + i, this.getY() + j);
+                if (this.moveTo(move, this.chessBoard))
+                {
+                    moves.Add(move);
+                }
+            }
+        }
+    }
+    private void rookPossibleMoves(List<Move> moves)
+    {
+        // optimisation possible
+        for (int i = 0; i < 8; i++)
+        {
+            Move move = new Move(this, i, this.getY());
+            if (this.moveTo(move, this.chessBoard))
+            {
+                moves.Add(move);
+            }
+        }
+        for (int i = 0; i < 8; i++)
+        {
+            Move move = new Move(this, this.getX(), i);
+            if (this.moveTo(move, this.chessBoard))
+            {
+                moves.Add(move);
+            }
+        }
+    }
+
+    private void bishopPossibleMoves(List<Move> moves)
+    {
+        // optimisation possible
+        Position pos;
+        int stepX;
+        int stepY;
+        for (int i = 0; i < 4; i++)
+        {
+            // chaque case possible pour un fou
+            switch (i)
+            {
+                case 0: stepX = 1; stepY = 1; break;
+                case 1: stepX = 1; stepY = -1; break;
+                case 2: stepX = -1; stepY = 1; break;
+                case 3: stepX = -1; stepY = -1; break;
+                default: return;
+            }
+            pos = new Position(this.getX(), this.getY());
+            while (chessBoard.isNotOut(pos))
+            {
+                Move move = new Move(this, pos.getX(), pos.getY());
+                if (this.moveTo(move, this.chessBoard))
+                {
+                    moves.Add(move);
+                }
+                pos.incrementXY(stepX, stepY);
+            }
+        }
+    }
+
+    private void knightPossibleMoves(List<Move> moves)
+    {
+        // optimisation possible
+        int x;
+        int y;
+        for (int i = 0; i < 8; i++)
+        {
+            // chaque case possible pour un cavalier
+            switch (i)
+            {
+                case 0: x = this.getX() + 2; y = this.getY() - 1; break;
+                case 1: x = this.getX() + 2; y = this.getY() + 1; break;
+                case 2: x = this.getX() + 1; y = this.getY() - 2; break;
+                case 3: x = this.getX() + 1; y = this.getY() + 2; break;
+                case 4: x = this.getX() - 2; y = this.getY() + 2; break;
+                case 5: x = this.getX() - 2; y = this.getY() - 2; break;
+                case 6: x = this.getX() - 1; y = this.getY() + 2; break;
+                case 7: x = this.getX() - 1; y = this.getY() - 2; break;
+                default: return;
+            }
+            Move move = new Move(this, x, y);
+            if (this.moveTo(move, this.chessBoard))
+            {
+                moves.Add(move);
+            }
+        }
+    }
+
+    private void pawnPossibleMoves(List<Move> moves)
+    {
+        // optimisation possible
+        int x;
+        int y;
+        for (int i = 0; i < 4; i++)
+        {
+            // chaque case possible pour un pion
+            switch (i)
+            {
+                case 0: x = this.getX(); y = this.getY() + 1; break;
+                case 1: x = this.getX(); y = this.getY() + 2; break;
+                case 2: x = this.getX() + 1; y = this.getY() + 1; break;
+                case 3: x = this.getX() - 1; y = this.getY() + 1; break;
+                default: return;
+            }
+            Move move = new Move(this, x, y);
+            if (this.moveTo(move, this.chessBoard))
+            {
+                moves.Add(move);
+            }
+        }
+    }
+
+    private void printPossibleMoves()
+    {
+        List<Move> possibleMoves = new List<Move>();
+        switch (this.Name)
+        {
+            case "King":
+                this.kingPossibleMoves(possibleMoves);
+                break;
+            case "Queen":
+                this.rookPossibleMoves(possibleMoves);
+                this.bishopPossibleMoves(possibleMoves);
+                break;
+            case "Bishop":
+                this.bishopPossibleMoves(possibleMoves);
+                break;
+            case "Knight":
+                this.knightPossibleMoves(possibleMoves);
+                break;
+            case "Rook":
+                this.rookPossibleMoves(possibleMoves);
+                break;
+            case "Pawn":
+                this.pawnPossibleMoves(possibleMoves);
+                break;
+        }
+        foreach (Move move in possibleMoves)
+        {
+            // TODO
+
+        }
+    }
+
+    private bool isClicked()
     {
         // Vérifie si le bouton gauche de la souris est enfoncé
         if (Input.GetMouseButtonDown(0))
@@ -450,17 +605,18 @@ public class Piece : MonoBehaviour
                     // attendre que le joueur clique sur une autre case
 
                     Debug.Log("L'objet " + this.name + " a été cliqué");
- 
-                    /* // position du pion test
-                    structure.s_position pos = new structure.s_position(6, 4);
-                    // position cible test
-                    structure.s_position target = new structure.s_position(5, 4);
-                    // mouvement de test
-                    structure.s_move move = new structure.s_move(chess.board[pos.line, pos.column].piece, pos, target);
-                    legalMove.movePiece(move, chess.board);
-                    chess.printChessBoard(chess.board); */
+                    return true;
                 }
             }
+        }
+        return false;
+    }
+
+    void Update()
+    {
+        if (this.isClicked())
+        {
+            this.printPossibleMoves();
         }
     }
 }

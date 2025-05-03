@@ -74,19 +74,19 @@ public class ChessBoard : MonoBehaviour
                 tempPiece = this.chessBoard[y, x];
                 if (y == 1)
                 {
-                    tempPiece.setAttributes("Pawn", "White", x, y);
+                    tempPiece.setAttributes("Pawn", "White", x, y, this);
                 }
                 else if (y == 6)
                 {
-                    tempPiece.setAttributes("Pawn", "Black", x, y);
+                    tempPiece.setAttributes("Pawn", "Black", x, y, this);
                 }
                 else if (y == 0)
                 {
-                    tempPiece.setAttributes(getPieceName(x), "White", x, y);
+                    tempPiece.setAttributes(getPieceName(x), "White", x, y, this);
                 }
                 else if (y == 7)
                 {
-                    tempPiece.setAttributes(getPieceName(x), "Black", x, y);
+                    tempPiece.setAttributes(getPieceName(x), "Black", x, y, this);
                 }
                 else
                 {
@@ -165,7 +165,8 @@ public class ChessBoard : MonoBehaviour
 
         // on bouge la pièce dans la vue du jeu
         piece.transform.position = new Vector3(piece.getX(), -4, -1);
-
+        // on indique à la pièce qu'elle a bougée
+        piece.madeMove();
         // debug affichage
         print($"{piece.name} moved to ({piece.getX()}, {piece.getY()})");
     }
@@ -239,6 +240,7 @@ public class ChessBoard : MonoBehaviour
         return this.movesHistory.Last();
     }
 
+    // scan dans la direction donnée depuis la position donnée jusqu'à tomber sur une pièce ou sortir du plateau
     public void findNextPiece(string direction, Position position)
     {
         int posX;
@@ -276,11 +278,13 @@ public class ChessBoard : MonoBehaviour
             {
                 position.incrementXY(stepX, stepY);
             }
-            else {
+            else
+            {
                 break;
             }
         }
-        if (this.getPiece(position) != null) {
+        if (this.getPiece(position) != null)
+        {
             print($"piece found at ({position.getX()}, {position.getY()}) : {this.getPiece(position).name}");
         }
         // je sais plus pourquoi j'ai mis ca...
