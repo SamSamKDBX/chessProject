@@ -14,7 +14,7 @@ public class Game : MonoBehaviour
         print("Piece récupérée");
         Move move_test = new Move(piece, 4, 4); // on créé un nouveau move avec la pièce et la position target
         print("Move créé");
-        bool validMove = piece.moveTo(move_test, chessBoard); // on essaye de déplacer la pièce
+        bool validMove = piece.moveTo(move_test, chessBoard, false); // on essaye de déplacer la pièce
         if (!validMove) {
             print("e4 invalide");
         }

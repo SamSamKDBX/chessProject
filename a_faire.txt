@@ -1,2 +1,4 @@
 revoir isCheck pour opti
 aller a // TODO
+gerer les pieces capturées
+renommer les objets case avec leur position ?

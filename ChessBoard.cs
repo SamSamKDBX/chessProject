@@ -143,7 +143,7 @@ public class ChessBoard : MonoBehaviour
         et modifie le champ position de la pièce
     */
     // précondition : le coup doit etre valide
-    public void movePieceInChessBoard(Position p, Piece piece)
+    public void movePieceInVirtualChessBoard(Position p, Piece piece, bool isVirtualMove)
     {
         // on ajoute la position avant mouvement à la liste des dernieres positions
         piece.setLastPosition(piece.getPosition());
@@ -163,12 +163,16 @@ public class ChessBoard : MonoBehaviour
         // on met à jour la position de la pièce déplacée
         piece.setPosition(p);
 
-        // on bouge la pièce dans la vue du jeu
-        piece.transform.position = new Vector3(piece.getX(), -4, -1);
-        // on indique à la pièce qu'elle a bougée
-        piece.madeMove();
-        // debug affichage
-        print($"{piece.name} moved to ({piece.getX()}, {piece.getY()})");
+        // si le coup n'est pas virtuel (pour les tests en cas d'échec apres le déplacement d'une pièce)
+        if (!isVirtualMove)
+        {
+            // on bouge la pièce dans la vue du jeu
+            piece.transform.position = new Vector3(piece.getX(), -piece.getY(), -1); // TODO //////////////////////////////////
+            // on indique à la pièce qu'elle a bougée
+            piece.madeMove();
+            // debug affichage
+            print($"{piece.name} moved to ({piece.getX()}, {piece.getY()})");
+        }
     }
 
     public void capturePiece(Piece p)

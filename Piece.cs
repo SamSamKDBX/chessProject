@@ -86,7 +86,7 @@ public class Piece : MonoBehaviour
         this.hasNeverMoved = false;
     }
 
-    public bool moveTo(Move move, ChessBoard chessBoard)
+    public bool moveTo(Move move, ChessBoard chessBoard, bool isVirtualMove)
     {
         Position target = move.getPosition();
 
@@ -96,17 +96,14 @@ public class Piece : MonoBehaviour
         // - il n'y a pas de pieces sur le passage
         // - le coup est légal pour la pièce à déplacer
         // sont réunies, on déplace la pièce
-        if (!target.equals(this.position)
-            && chessBoard.isNotOut(target)
-            && this.isWayClear(move, chessBoard)
-            && this.isLegalMove(move))
+        if (isLegalMove(move))
         {
             // on bouge dans le tableau chessBoard
-            chessBoard.movePieceInChessBoard(target, this);
+            chessBoard.movePieceInVirtualChessBoard(target, this, isVirtualMove);
             // si le roi est en échec après le mouvement, on reviens à la position initiale
             if (chessBoard.getKing(this.color).isCheck(move, chessBoard))
             {
-                chessBoard.movePieceInChessBoard(this.latestPositions.Last(), this);
+                chessBoard.movePieceInVirtualChessBoard(this.latestPositions.Last(), this, isVirtualMove);
                 this.latestPositions.RemoveAt(this.latestPositions.Count - 1);
                 Debug.Log("You cannot put the king in check");
                 return false;
@@ -120,6 +117,12 @@ public class Piece : MonoBehaviour
 
     public bool isLegalMove(Move move)
     {
+        if (move.getPosition().equals(this.position)
+            || !chessBoard.isNotOut(move.getPosition())
+            || !this.isWayClear(move, chessBoard))
+        {
+            return false;
+        }
         switch (this.Name)
         {
             case "King": return this.isKingLegalMove(move);
@@ -160,7 +163,6 @@ public class Piece : MonoBehaviour
         // on se déplace vers le bas (ligne négative : -1), sinon vers le haut (+1).
         // (targetY > posY && targetX == posX) || (targetY > posY && targetX < posX) || (targetY > posY && targetX > posX)
         stepY = targetY > posY ? 1 : -1;
-        print("stepY = " + stepY);
 
         // Si la direction est "Right", "BottomRightCorner" ou "TopRightCorner",
         // on se déplace vers la droite (colonne positive : +1), sinon vers la gauche (-1).
@@ -444,7 +446,7 @@ public class Piece : MonoBehaviour
             for (int j = -1; j < 2; j++)
             {
                 Move move = new Move(this, this.getX() + i, this.getY() + j);
-                if (this.moveTo(move, this.chessBoard))
+                if (this.moveTo(move, this.chessBoard, true))
                 {
                     moves.Add(move);
                 }
@@ -457,7 +459,7 @@ public class Piece : MonoBehaviour
         for (int i = 0; i < 8; i++)
         {
             Move move = new Move(this, i, this.getY());
-            if (this.moveTo(move, this.chessBoard))
+            if (this.moveTo(move, this.chessBoard, true))
             {
                 moves.Add(move);
             }
@@ -465,7 +467,7 @@ public class Piece : MonoBehaviour
         for (int i = 0; i < 8; i++)
         {
             Move move = new Move(this, this.getX(), i);
-            if (this.moveTo(move, this.chessBoard))
+            if (this.moveTo(move, this.chessBoard, true))
             {
                 moves.Add(move);
             }
@@ -493,7 +495,7 @@ public class Piece : MonoBehaviour
             while (chessBoard.isNotOut(pos))
             {
                 Move move = new Move(this, pos.getX(), pos.getY());
-                if (this.moveTo(move, this.chessBoard))
+                if (this.moveTo(move, this.chessBoard, true))
                 {
                     moves.Add(move);
                 }
@@ -523,7 +525,7 @@ public class Piece : MonoBehaviour
                 default: return;
             }
             Move move = new Move(this, x, y);
-            if (this.moveTo(move, this.chessBoard))
+            if (this.moveTo(move, this.chessBoard, true))
             {
                 moves.Add(move);
             }
@@ -547,7 +549,7 @@ public class Piece : MonoBehaviour
                 default: return;
             }
             Move move = new Move(this, x, y);
-            if (this.moveTo(move, this.chessBoard))
+            if (this.moveTo(move, this.chessBoard, true))
             {
                 moves.Add(move);
             }
@@ -582,6 +584,7 @@ public class Piece : MonoBehaviour
         foreach (Move move in possibleMoves)
         {
             // TODO
+            // afficher au joueur les coups contenus dans la liste
 
         }
     }
@@ -617,6 +620,28 @@ public class Piece : MonoBehaviour
         if (this.isClicked())
         {
             this.printPossibleMoves();
+            if (Input.GetMouseButtonDown(0))
+            {
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
+
+                // Vérifie si un objet a été touché par le rayon
+                if (hit.collider != null)
+                {
+                    // TODO
+                    // boucle foreach pour les coups possible et vérification si la case cliquée est l'un d'eux
+
+
+                    
+                    // Si l'objet cliqué est celui-ci
+                    if (hit.collider.gameObject == this.gameObject)
+                    {
+                        // Code à exécuter lorsqu'on clique sur l'objet
+                        // attendre que le joueur clique sur une autre case
+
+                    }
+                }
+            }
         }
     }
 }
