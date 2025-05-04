@@ -8,8 +8,10 @@ public class Piece : MonoBehaviour
     private string color;
     private Position position;
     private List<Position> latestPositions;
+    private List<GameObject> possibleSquares;
     private bool hasNeverMoved;
     private ChessBoard chessBoard;
+    private bool isClickedVar;
     private readonly string[] directions = {
             "Bottom",
             "Right",
@@ -29,6 +31,7 @@ public class Piece : MonoBehaviour
         this.hasNeverMoved = true;
         this.chessBoard = chessBoard;
         this.latestPositions = new List<Position>();
+        this.isClickedVar = false;
     }
 
     public string getName()
@@ -99,16 +102,17 @@ public class Piece : MonoBehaviour
         if (isLegalMove(move))
         {
             // on bouge dans le tableau chessBoard
-            chessBoard.movePieceInVirtualChessBoard(target, this, isVirtualMove);
+            chessBoard.movePieceChessBoard(target, this, isVirtualMove);
             // si le roi est en échec après le mouvement, on reviens à la position initiale
             if (chessBoard.getKing(this.color).isCheck(move, chessBoard))
             {
-                chessBoard.movePieceInVirtualChessBoard(this.latestPositions.Last(), this, isVirtualMove);
+                chessBoard.movePieceChessBoard(this.latestPositions.Last(), this, isVirtualMove);
                 this.latestPositions.RemoveAt(this.latestPositions.Count - 1);
-                Debug.Log("You cannot put the king in check");
+                // Debug.Log("You cannot put the king in check");
                 return false;
             }
             chessBoard.addMoveToHistory(move);
+            print($"Move piece {move.getPiece().name} to ({target.getX()}, {target.getY()}) is legal");
             return true;
         }
         print("move is not legal");
@@ -121,6 +125,7 @@ public class Piece : MonoBehaviour
             || !chessBoard.isNotOut(move.getPosition())
             || !this.isWayClear(move, chessBoard))
         {
+            print("Error : position equals target || position out || way is not clear");
             return false;
         }
         switch (this.Name)
@@ -132,7 +137,7 @@ public class Piece : MonoBehaviour
             case "Rook": return this.isRookLegalMove(move);
             case "Pawn": return this.isPawnLegalMove(move);
             default:
-                print("move isn't legal");
+                print("Error in Piece.isLegalMove()");
                 return false;
         }
     }
@@ -208,9 +213,7 @@ public class Piece : MonoBehaviour
         Piece foundPiece = chessBoard.getPiece(scanPos);
         if (!scanPos.equals(target) || foundPiece != null && foundPiece.getColor() == this.color)
         {
-            print("Way is not clear");
-            print("scanPos.equals(target) = " + scanPos.equals(target));
-            print("foundPiece null ? " + foundPiece == null);
+            print("Way is not clear\nscanPos.equals(target) = " + scanPos.equals(target) + "\nfoundPiece null ? " + foundPiece == null);
             return false;
         }
 
@@ -230,7 +233,7 @@ public class Piece : MonoBehaviour
             // faire le roque et isCheck ////////////////////////////////////////////////////////////////////
             return true;
         }
-        print("move is not king legal move");
+        print($"move to ({move.getPosition().getY()}, {move.getPosition().getY()}) is not king legal move");
         return false;
     }
 
@@ -242,7 +245,7 @@ public class Piece : MonoBehaviour
         {
             return true;
         }
-        print("move is not queen legal move");
+        print($"move to ({move.getPosition().getY()}, {move.getPosition().getY()}) is not queen legal move");
         return false;
     }
 
@@ -254,7 +257,7 @@ public class Piece : MonoBehaviour
         {
             return true;
         }
-        print("move is not rook legal move");
+        print($"move to ({move.getPosition().getY()}, {move.getPosition().getY()}) is not rook legal move");
         return false;
     }
 
@@ -266,7 +269,7 @@ public class Piece : MonoBehaviour
         {
             return true;
         }
-        print("move is not bishop legal move");
+        print($"move to ({move.getPosition().getY()}, {move.getPosition().getY()}) is not bishop legal move");
         return false;
     }
 
@@ -281,7 +284,7 @@ public class Piece : MonoBehaviour
         {
             return true;
         }
-        print("move is not knight legal move");
+        print($"move to ({move.getPosition().getY()}, {move.getPosition().getY()}) is not knight legal move");
         return false;
     }
 
@@ -328,7 +331,7 @@ public class Piece : MonoBehaviour
                 return true;
             }
         }
-        print("move is not pawn legal move");
+        print($"move to ({targetX}, {targetY}) is not pawn legal move");
         return false;
     }
 
@@ -559,6 +562,7 @@ public class Piece : MonoBehaviour
     private void printPossibleMoves()
     {
         List<Move> possibleMoves = new List<Move>();
+        List<GameObject> possibleSquares = new List<GameObject>();
         switch (this.Name)
         {
             case "King":
@@ -581,12 +585,28 @@ public class Piece : MonoBehaviour
                 this.pawnPossibleMoves(possibleMoves);
                 break;
         }
+        string forPrint = "";
+        SpriteRenderer[] onlyInactive = FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None).Where(sr => !sr.gameObject.activeInHierarchy).ToArray();
         foreach (Move move in possibleMoves)
         {
             // TODO
             // afficher au joueur les coups contenus dans la liste
-
+            int x = move.getPosition().getX();
+            int y = move.getPosition().getY();
+            foreach (SpriteRenderer sr in onlyInactive)
+            {
+                if (sr.name == $"square_{x}_{y}_possible")
+                {
+                    GameObject possibleSquare = sr.gameObject;
+                    print(possibleSquare.name + " is a possible square");
+                    possibleSquare.SetActive(true);
+                    possibleSquares.Add(possibleSquare);
+                    forPrint += possibleSquare.name + ", ";
+                }
+            }
         }
+        print($"List of possible squares ({forPrint})");
+        this.possibleSquares = possibleSquares;
     }
 
     private bool isClicked()
@@ -607,7 +627,7 @@ public class Piece : MonoBehaviour
                     // Code à exécuter lorsqu'on clique sur l'objet
                     // attendre que le joueur clique sur une autre case
 
-                    Debug.Log("L'objet " + this.name + " a été cliqué");
+                    Debug.Log("---------------------------------------------------------------\nL'objet " + this.name + " a été cliqué");
                     return true;
                 }
             }
@@ -617,9 +637,8 @@ public class Piece : MonoBehaviour
 
     void Update()
     {
-        if (this.isClicked())
+        if (this.isClickedVar)
         {
-            this.printPossibleMoves();
             if (Input.GetMouseButtonDown(0))
             {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -630,18 +649,24 @@ public class Piece : MonoBehaviour
                 {
                     // TODO
                     // boucle foreach pour les coups possible et vérification si la case cliquée est l'un d'eux
-
-
-                    
-                    // Si l'objet cliqué est celui-ci
-                    if (hit.collider.gameObject == this.gameObject)
+                    foreach (GameObject possibleSquare in possibleSquares)
                     {
-                        // Code à exécuter lorsqu'on clique sur l'objet
-                        // attendre que le joueur clique sur une autre case
-
+                        if (hit.collider.gameObject == possibleSquare)
+                        {
+                            int x = (int)possibleSquare.transform.position.x;
+                            int y = -(int)possibleSquare.transform.position.y;
+                            this.moveTo(new Move(this, x, y), this.chessBoard, false);
+                        }
+                        possibleSquare.SetActive(false);
                     }
                 }
+                this.isClickedVar = false;
             }
+        }
+        else if (this.isClicked())
+        {
+            this.printPossibleMoves();
+            this.isClickedVar = true;
         }
     }
 }

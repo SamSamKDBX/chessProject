@@ -7,16 +7,6 @@ public class ChessBoard : MonoBehaviour
     private List<Piece> pieces;
     public GameObject Pieces;
     private Piece[,] chessBoard;
-    private readonly string[,] squareNames = {
-        {"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"},
-        {"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7"},
-        {"a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"},
-        {"a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5"},
-        {"a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4"},
-        {"a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3"},
-        {"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2"},
-        {"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"}
-    };
     private List<Move> movesHistory;
     private List<Piece> capturedBlackPieces;
     private List<Piece> capturedWhitePieces;
@@ -143,7 +133,7 @@ public class ChessBoard : MonoBehaviour
         et modifie le champ position de la pièce
     */
     // précondition : le coup doit etre valide
-    public void movePieceInVirtualChessBoard(Position p, Piece piece, bool isVirtualMove)
+    public void movePieceChessBoard(Position p, Piece piece, bool isVirtualMove)
     {
         // on ajoute la position avant mouvement à la liste des dernieres positions
         piece.setLastPosition(piece.getPosition());
@@ -167,11 +157,12 @@ public class ChessBoard : MonoBehaviour
         if (!isVirtualMove)
         {
             // on bouge la pièce dans la vue du jeu
-            piece.transform.position = new Vector3(piece.getX(), -piece.getY(), -1); // TODO //////////////////////////////////
+            piece.transform.position = new Vector3(piece.getX(), -piece.getY(), -1);
             // on indique à la pièce qu'elle a bougée
             piece.madeMove();
             // debug affichage
             print($"{piece.name} moved to ({piece.getX()}, {piece.getY()})");
+            this.print();
         }
     }
 
@@ -295,11 +286,6 @@ public class ChessBoard : MonoBehaviour
         // on rajoute la direction de là ou on viens à la position de la case sur laquelle on est tombé
         // position.directionFromColumn = stepX;
         // position.directionFromLine = stepY;
-    }
-
-    public string getSquareName(Position pos)
-    {
-        return this.squareNames[7 - pos.getX(), pos.getY()];
     }
 
     public void print()

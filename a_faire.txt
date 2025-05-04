@@ -1,4 +1,6 @@
 revoir isCheck pour opti
 aller a // TODO
 gerer les pieces capturées
-renommer les objets case avec leur position ?
+
+Verifier les conditions de coup légaux
+Vérifier les appels a moveTo pour éviter les erreurs de position
